@@ -1,7 +1,8 @@
-\NeedsTexFormat{LaTeX2e}
+\NeedsTeXFormat{LaTeX2e}
 \RequirePackage{xparse}
 \RequirePackage{expl3}
 \RequirePackage{graphicx}
+\RequirePackage{stackengine}
 \ProvidesExplPackage{mahjong}{2021/04/04}{0.1}{Typeset Mahjong Hands}
 
 % Identifiers for all suits
@@ -16,6 +17,17 @@
 \str_new:N \l_current_group_str
 \str_new:N \l_current_char
 
+% Output token list. Because we parse the hand in reverse, we must reverse the result
+\tl_new:N \l_output_tl
+
+\cs_set:Npn \make_tile:nn #1#2 {
+    \stackinset{c}{0pt}{c}{0pt}{
+    \includegraphics[height=.95\baselineskip]{tiles/#1#2.pdf}}{
+    \includegraphics[width=\baselineskip]{tiles/Front.pdf}}
+}
+
+\cs_generate_variant:Nn \make_tile:nn {VV}
+
 % Parses a group of tiles belonging to the same suit
 \cs_set:Npn \parse_group:nn #1#2 {
     \str_set:Nn \l_suit_str {#1}
@@ -25,7 +37,7 @@
             \hspace{.5\baselineskip}
         } { % Otherwise insert full notation
             %TODO: replace with images
-            \l_tmpa_str \l_suit_str
+            \make_tile:VV {\l_tmpa_str} {\l_suit_str}
         }
     }
 }
@@ -42,7 +54,6 @@
     \str_set:Nx \l_reversed_str {\tl_to_str:N \l_tmpa_tl}
 
     \str_map_variable:NNn \l_reversed_str \l_current_char {
-
         \exp_args:NVV \str_if_in:nnTF \c_suits_str \l_current_char {
             % If we've found a suit identifier, typeset the current group
             \parse_group:VV \l_current_suit_str \l_current_group_str
@@ -62,5 +73,7 @@
 
 % Macro for LaTeX document
 \NewDocumentCommand{\mahjong}{m}{
-    \parse_hand:x {#1}
+    \parse_hand:n {#1}
 }
+
+\endinput
