@@ -1,0 +1,52 @@
+\NeedsTexFormat{LaTeX2e}
+\ProvidesExplPackage{mahjong}{2021/04/04}{0.1}{Typeset Mahjong Hands}
+
+% Identifiers for all suits
+\cs_new:Npn \c_suits_str {mpszf}
+\str_new:N \l_suit_str
+\str_new:N \l_tiles_str
+\str_new:N \l_reversed_str
+\str_new:N \l_hand_str
+\str_new:N \l_current_suit_str
+\str_new:N \l_current_group_str
+\str_new:N \l_current_char
+
+% Parses a group of tiles belonging to the same suit
+\cs_set:Npn \parse_group:nn #1#2 {
+    \str_set:Nn \l_suit_str {#1}
+    \str_set:Nn \l_tiles_str {#2}
+    \str_map_variable:NNn \l_tiles_str \l_tmpa_str {
+        \str_if_eq:VnTF \l_tmpa_str {~} { % If there is a tilde, insert a space
+            \hspace{.5\baselineskip}
+        } { % Otherwise insert full notation
+            %TODO: replace with images
+            \l_tmpa_str \l_suit_str
+        }
+    }
+}
+
+\cs_generate_variant:Nn \parse_group:nn { Vn, nV, VV }
+
+\newcommand{\parsegroup}[2]{
+    \parse_group:nn {#1} {#2}
+}
+
+\cs_set:Npn \parse_hand:n #1 {
+    \str_set:Nn \l_hand_str {#1} 
+    \tl_set:Nx \l_tmpa_tl {\tl_reverse:V \l_hand_str}
+    \str_set:Nx \l_reversed_str {\tl_to_str:N \l_tmpa_tl}
+
+    \str_map_variable:NNn \l_reversed_str \l_current_char {
+        \cs_log:N \l_current_char
+        \exp_args:NVV \str_if_in:nnTF \c_suits_str \l_current_char {
+            \cs_log:N \l_current_suit_str
+            \cs_log:N \l_current_group_str
+            \parse_group:VV \l_current_suit_str \l_current_group_str
+            \str_clear:N \l_current_group_str
+            \str_set:NV \l_current_suit_str \l_current_char
+        } {
+            \str_put_right:NV \l_current_group_str \l_current_char
+        }
+    }
+    \parse_group:VV \l_current_suit_str \l_current_group_str
+}
