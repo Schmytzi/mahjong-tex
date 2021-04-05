@@ -6,38 +6,45 @@
 \ProvidesExplPackage{mahjong}{2021/04/04}{0.1}{Typeset Mahjong Hands}
 
 % Identifiers for all suits
-\cs_new:Npn \c_suits_str {mpszf}
+\cs_new:Npn \c_suits_tl {mpszf}
+% Allowed tokens
+\cs_new:Npn \c_allowed_tokens_tl {0123456789mpszf-?x'"}
 
 % Variables have to be declared globally
-\str_new:N \l_suit_str
-\str_new:N \l_tiles_str
-\str_new:N \l_reversed_str
-\str_new:N \l_hand_str
-\str_new:N \l_current_suit_str
-\str_new:N \l_current_group_str
-\str_new:N \l_current_char
+\tl_new:N \l_suit_tl
+\tl_new:N \l_tiles_tl
+\tl_new:N \l_reversed_tl
+\tl_new:N \l_hand_tl
+\tl_new:N \l_current_suit_tl
+\tl_new:N \l_current_group_tl
+\tl_new:N \l_current_char
+
+\dim_new:N \l_mahjong_tile_height
+\dim_set:Nn \l_mahjong_tile_height {\baselineskip}
 
 % Output token list. Because we parse the hand in reverse, we must reverse the result
 \tl_new:N \l_output_tl
 
 \cs_set:Npn \make_tile:nn #1#2 {
+    \tl_put_left:Nn \l_output_tl {
     \stackinset{c}{0pt}{c}{0pt}{
-    \includegraphics[height=.95\baselineskip]{tiles/#1#2.pdf}}{
-    \includegraphics[width=\baselineskip]{tiles/Front.pdf}}
+    \includegraphics[height=.9\l_mahjong_tile_height]{tiles/#1#2.pdf}}{
+    \includegraphics[height=\l_mahjong_tile_height]{tiles/Front.pdf}}
+    }
 }
 
 \cs_generate_variant:Nn \make_tile:nn {VV}
 
 % Parses a group of tiles belonging to the same suit
 \cs_set:Npn \parse_group:nn #1#2 {
-    \str_set:Nn \l_suit_str {#1}
-    \str_set:Nn \l_tiles_str {#2}
-    \str_map_variable:NNn \l_tiles_str \l_tmpa_str {
-        \str_if_eq:VnTF \l_tmpa_str {~} { % If there is a tilde, insert a space
-            \hspace{.5\baselineskip}
+    \tl_set:Nn \l_suit_tl {#1}
+    \tl_set:Nn \l_tiles_tl {#2}
+    \tl_map_variable:NNn \l_tiles_tl \l_tmpa_tl {
+        \str_if_eq:VnTF \l_tmpa_tl {-} { % If there is a dash, insert a space
+            \tl_put_left:Nn \l_output_tl {\includegraphics[height=\l_mahjong_tile_height]{tiles/space.pdf}}
         } { % Otherwise insert full notation
             %TODO: replace with images
-            \make_tile:VV {\l_tmpa_str} {\l_suit_str}
+            \make_tile:VV {\l_tmpa_tl} {\l_suit_tl}
         }
     }
 }
@@ -46,34 +53,38 @@
 
 % Parses a full hand
 \cs_set:Npn \parse_hand:n #1 {
-    \str_set:Nn \l_hand_str {#1} 
+    \tl_set:Nn \l_hand_tl {#1} 
     % MPSZ notation is easier to parse right-to-left, so reverse string
     % There is no string reversal function but we can reverse token lists
     % Token lists and strings are freely convertible between each other
-    \tl_set:Nx \l_tmpa_tl {\tl_reverse:V \l_hand_str}
-    \str_set:Nx \l_reversed_str {\tl_to_str:N \l_tmpa_tl}
-
-    \str_map_variable:NNn \l_reversed_str \l_current_char {
-        \exp_args:NVV \str_if_in:nnTF \c_suits_str \l_current_char {
+  %  \tl_new:N \l_reversed_tl
+    \tl_set:Nx \l_reversed_tl {\tl_reverse:V \l_hand_tl} 
+    %\tl_set:Nx \l_tmpa_tl {\tl_reverse:V \l_hand_str}
+    %\str_set:Nx \l_reversed_str {\tl_to_str:N \l_tmpa_tl}
+    \tl_map_variable:NNn \l_reversed_tl \l_current_char {
+        \exp_args:NVV \tl_if_in:nnTF \c_suits_tl \l_current_char {
             % If we've found a suit identifier, typeset the current group
-            \parse_group:VV \l_current_suit_str \l_current_group_str
+            \parse_group:VV \l_current_suit_tl \l_current_group_tl
             % Start the next group
-            \str_clear:N \l_current_group_str
-            \str_set:NV \l_current_suit_str \l_current_char
+            \tl_clear:N \l_current_group_tl
+            \tl_set:NV \l_current_suit_tl \l_current_char
         } {
             % If the current symbol does not match a suit, assume it's part of the group
-            \str_put_right:NV \l_current_group_str \l_current_char
+            \tl_put_right:NV \l_current_group_tl \l_current_char
         }
     }
-    \parse_group:VV \l_current_suit_str \l_current_group_str
+    \parse_group:VV \l_current_suit_tl \l_current_group_tl
+    \tl_use:N \l_output_tl
+    \tl_clear:N \l_output_tl
 }
 
 % Have TeX automatically expand the argument for us
 \cs_generate_variant:Nn \parse_hand:n {x}
 
 % Macro for LaTeX document
-\NewDocumentCommand{\mahjong}{m}{
-    \parse_hand:n {#1}
+\NewDocumentCommand{\mahjong}{O{\baselineskip} m}{
+    \dim_set:Nn \l_mahjong_tile_height {#1}
+    \makebox{\parse_hand:n {#2}}
 }
 
 \endinput
