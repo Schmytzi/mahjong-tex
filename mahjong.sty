@@ -114,7 +114,7 @@
 
 % Parses a full hand
 \cs_set:Npn \parse_hand:n #1 {
-    \tl_set:Nn \l_hand_tl {#1} 
+    \tl_set:Nx \l_hand_tl {\text_lowercase:n {#1}} 
     % MPSZ notation is easier to parse right-to-left, so reverse string
     % There is no string reversal function but we can reverse token lists
     % Token lists and strings are freely convertible between each other
