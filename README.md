@@ -1,7 +1,7 @@
 # mahjong-tex
 A LaTeX 3 package for typesetting mahjong hands using MPSZ algebraic notation.
 
-# Installation
+## Installation
 Place `mahjong.sty` and `tiles` in your document's folder. 
 
 ## Attribution
