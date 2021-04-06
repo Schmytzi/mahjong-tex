@@ -5,7 +5,12 @@
 \RequirePackage{stackengine}
 \ProvidesExplPackage{mahjong}{2021/04/04}{0.1}{Typeset Mahjong Hands}
 
-\msg_new:nnnn {mahjong} {invalid_token} {Token ~ #1 ~ is ~ not ~ valid ~ in ~ MPSZ ~ notation} {Valid ~ tokens ~ are ~ digits ~ 0-9, ~ m, ~ p, ~ s, ~ z, ~ x, ~ -, ~ ?, ~ ', ~ and ~ " }
+\msg_new:nnnn {mahjong} {invalid_token}
+{Token ~ #1 ~ is ~ not ~ valid ~ in ~ MPSZ ~ notation}
+{Valid ~ tokens ~ are ~ digits ~ 0-9, ~ m, ~ p, ~ s, ~ z, ~ x, ~ -, ~ ?, ~ ', ~ and ~ " }
+\msg_new:nnnn {mahjong} {unknown_tile}
+{I~don't~know~tile~#1.}
+{Please~check~the~documentation~for~recognized~tiles.}
 
 
 % Identifiers for all suits
@@ -33,38 +38,41 @@
 
 
 \cs_set:Npn \make_tile:nn #1#2 {
-    \bool_log:N \l_tile_sideways_bool
+    \file_if_exist:nTF {tiles/#1#2.pdf} {
     \if_bool:N \l_tile_sideways_bool
-        \tl_put_left:Nn \l_output_tl {
-            \stackinset{c}{0pt}{c}{0pt}{
-                \includegraphics[
-                    angle=270,
-                    width=.9\l_mahjong_tile_height,
-                    origin=br]
-                {tiles/#1#2.pdf}
-            }{
-                \includegraphics[
-                    angle=270,
-                    width=\l_mahjong_tile_height,
-                    origin=br]
-                {tiles/Front.pdf}
+            \tl_put_left:Nn \l_output_tl {
+                \stackinset{c}{0pt}{c}{0pt}{
+                    \includegraphics[
+                        angle=270,
+                        width=.9\l_mahjong_tile_height,
+                        origin=br]
+                    {tiles/#1#2.pdf}
+                }{
+                    \includegraphics[
+                        angle=270,
+                        width=\l_mahjong_tile_height,
+                        origin=br]
+                    {tiles/Front.pdf}
+                }
             }
-        }
-    \else:
-        \tl_put_left:Nn \l_output_tl {
-            \stackinset{c}{0pt}{c}{0pt}{
-                \includegraphics[
-                    angle=0,
-                    height=.9\l_mahjong_tile_height]
-                {tiles/#1#2.pdf}
-            }{
-                \includegraphics[
-                    angle=0,
-                    height=\l_mahjong_tile_height]
-                {tiles/Front.pdf}
+        \else:
+            \tl_put_left:Nn \l_output_tl {
+                \stackinset{c}{0pt}{c}{0pt}{
+                    \includegraphics[
+                        angle=0,
+                        height=.9\l_mahjong_tile_height]
+                    {tiles/#1#2.pdf}
+                }{
+                    \includegraphics[
+                        angle=0,
+                        height=\l_mahjong_tile_height]
+                    {tiles/Front.pdf}
+                }
             }
-        }
-    \fi
+        \fi
+    } {
+        \msg_error:nnx {mahjong} {unknown_tile} {#1#2}
+    }
     \bool_set_false:N \l_tile_sideways_bool
 }
 
