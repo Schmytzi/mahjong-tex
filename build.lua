@@ -2,4 +2,4 @@
 
 module = "mahjong"
 
-typesetfiles = {"*.tex"}
+typesetfiles = {"mahjong*.tex"}
