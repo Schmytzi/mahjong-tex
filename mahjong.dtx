@@ -20,7 +20,7 @@
 % \fi
 
 % \iffalse
-%<pkg>\NeedsTexFormat{LaTeX2e}[2019/10/01]
+%<pkg>\NeedsTeXFormat{LaTeX2e}[2019/10/01]
 %<pkg>\RequirePackage{expl3}
 %<pkg>\ProvidesExplPackage{mahjong}{2021/04/04}{0.5}{Typeset Mahjong Hands}
 %<pkg>\RequirePackage{xparse}
@@ -44,14 +44,14 @@
 %   Digits        \0\1\2\3\4\5\6\7\8\9
 %   Exclamation   \!     Double quote  \"     Hash (number) \#
 %   Dollar        \$     Percent       \%     Ampersand     \&
-%   Acute accent  \’     Left paren    \(     Right paren   \)
+%   Acute accent  \'     Left paren    \(     Right paren   \)
 %   Asterisk      \*     Plus          \+     Comma         \,
 %   Minus         \-     Point         \.     Solidus       \/
 %   Colon         \:     Semicolon     \;     Less than     \<
 %   Equals        \=     Greater than  \>     Question mark \?
 %   Commercial at \@     Left bracket  \[     Backslash     \\
 %   Right bracket \]     Circumflex    \^     Underscore    \_
-%   Grave accent  \‘     Left brace    \{     Vertical bar  \|
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %   Right brace   \}     Tilde         \~}
 
 % \changes{v0.5}{2020/04/07}{First working version, minimal error handling}
@@ -234,6 +234,7 @@
     \parse_hand:n {#2}
 }
 %    \end{macrocode}
-%
+% \end{macro}
+% 
 % \Finale
 \endinput
