@@ -274,3 +274,8 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+# Project specific
+.DS_Store
+*.pdf
+*.code-workspace
