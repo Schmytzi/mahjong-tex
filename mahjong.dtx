@@ -20,12 +20,6 @@
 % \fi
 
 % \iffalse
-%<pkg>\NeedsTeXFormat{LaTeX2e}[2019/10/01]
-%<pkg>\RequirePackage{expl3}
-%<pkg>\ProvidesExplPackage{mahjong}{2021/04/04}{0.5}{Typeset Mahjong Hands}
-%<pkg>\RequirePackage{xparse}
-%<pkg>\RequirePackage{graphicx}
-%<pkg>\RequirePackage{stackengine}
 
 %<*driver>
 \documentclass{ltxdoc}
@@ -64,16 +58,27 @@
 %  \author{Daniel Schmitz \\ \texttt{schmytzi@gmail.com}}
 %
 % \maketitle
-%
+% \begin{documentation}
 % \section{Introduction}
 % I like mahjong!
 % \section{Typesetting Hands}
 % \DescribeMacro{mahjong}
 % Use |\mahjong| \oarg{height} \marg{hand}
 %
-% \StopEventually{}
+% \end{documentation}
+% \begin{implementation}
 %
-% \PrintChanges
+%    \begin{macrocode}
+%<*pkg>
+%<@@=mahjong>
+\NeedsTeXFormat{LaTeX2e}[2019/10/01]
+\RequirePackage{expl3}
+\ProvidesExplPackage{mahjong}{2021/04/04}{0.5}{Typeset Mahjong Hands}
+\RequirePackage{xparse}
+\RequirePackage{graphicx}
+\RequirePackage{stackengine}
+%    \end{macrocode}
+
 %    \begin{macrocode}
 \msg_new:nnnn {mahjong} {invalid_token}
 {Token ~ #1 ~ is ~ not ~ valid ~ in ~ MPSZ ~ notation}
@@ -84,145 +89,125 @@
 
 
 % Identifiers for all suits
-\cs_new:Npn \c_suits_tl {mpsz}
+\cs_new:Npn \c_@@_suits_tl {mpsz}
 % Allowed tokens
-\cs_new:Npn \c_allowed_tokens_tl {0123456789mpsz-?x'"}
+\cs_new:Npn \c_@@_allowed_tokens_tl {0123456789mpsz-?x'"}
 
 % Variables have to be declared globally
-\tl_new:N \l_suit_tl
-\tl_new:N \l_tiles_tl
-\tl_new:N \l_reversed_tl
-\tl_new:N \l_hand_tl
-\tl_new:N \l_current_suit_tl
-\tl_new:N \l_current_group_tl
-\tl_new:N \l_current_char
+\tl_new:N \l_@@_suit_tl
+\tl_new:N \l_@@_tiles_tl
+\tl_new:N \l_@@_reversed_tl
+\tl_new:N \l_@@_hand_tl
+\tl_new:N \l_@@_current_suit_tl
+\tl_new:N \l_@@_current_group_tl
+\tl_new:N \l_@@_current_char
 
-\dim_new:N \l_mahjong_tile_height
-\dim_set:Nn \l_mahjong_tile_height {\baselineskip}
+\dim_new:N \l_@@_mahjong_tile_height
+\dim_set:Nn \l_@@_mahjong_tile_height {\baselineskip}
 
-\bool_new:N \l_tile_sideways_bool
+\int_new:N \l_@@_tile_orientation_int
+\seq_new:N \l_@@_tile_maps_seq
+\str_new:N \l_@@_file_path_str
 
-
-% Output token list. Because we parse the hand in reverse, we must reverse the result
-\tl_new:N \l_output_tl
-
-
-\cs_set:Npn \make_tile:nn #1#2 {
-    \file_if_exist:nTF {tiles/#1#2.pdf} {
-    \if_bool:N \l_tile_sideways_bool
-            \tl_put_left:Nn \l_output_tl {
-                \stackinset{c}{0pt}{c}{0pt}{
-                    \includegraphics[
-                        angle=270,
-                        width=.9\l_mahjong_tile_height,
-                        origin=br]
-                    {tiles/#1#2.pdf}
-                }{
-                    \includegraphics[
-                        angle=270,
-                        width=\l_mahjong_tile_height,
-                        origin=br]
-                    {tiles/Front.pdf}
-                }
+\cs_set:Npn \@@_make_tile:nn #1#2 {
+    \file_if_exist:nTF {#1} {
+        \int_compare:nNnTF {#2} = 1 {
+            \stackinset{c}{0pt}{c}{0pt}{
+                \includegraphics[
+                    angle=90,
+                    width=.9\l_@@_mahjong_tile_height]
+                {#1}
+            }{
+                \includegraphics[
+                    angle=90,
+                    width=\l_@@_mahjong_tile_height]
+                {tiles/Front.pdf}
             }
-        \else:
-            \tl_put_left:Nn \l_output_tl {
-                \stackinset{c}{0pt}{c}{0pt}{
-                    \includegraphics[
-                        angle=0,
-                        height=.9\l_mahjong_tile_height]
-                    {tiles/#1#2.pdf}
-                }{
-                    \includegraphics[
-                        angle=0,
-                        height=\l_mahjong_tile_height]
-                    {tiles/Front.pdf}
-                }
+        } {
+            \stackinset{c}{0pt}{c}{0pt}{
+                \includegraphics[
+                    angle=0,
+                    height=.9\l_@@_mahjong_tile_height]
+                {#1}
+            }{
+                \includegraphics[
+                    angle=0,
+                    height=\l_@@_mahjong_tile_height]
+                {tiles/Front.pdf}
             }
-        \fi
-    } {
-        \msg_error:nnx {mahjong} {unknown_tile} {#1#2}
-    }
-    \bool_set_false:N \l_tile_sideways_bool
-}
-
-\cs_generate_variant:Nn \make_tile:nn {VV, nn}
-
-% Parses a group of tiles belonging to the same suit
-\cs_set:Npn \parse_group:nn #1#2 {
-    \tl_set:Nn \l_suit_tl {#1}
-    \tl_set:Nn \l_tiles_tl {#2}
-    \tl_map_variable:NNn \l_tiles_tl \l_tmpa_tl {
-        \str_case:VnTF \l_tmpa_tl {
-            {-} { % If there is a dash, insert a space
-                \tl_put_left:Nn \l_output_tl {
-                    \includegraphics[height=\l_mahjong_tile_height]{tiles/space.pdf}
-                }
-            }
-            {?} {
-                % Missing tile. Displayed as an ordinary tile with a question mark image, file name is Blank.pdf
-                \make_tile:nn {Blan} {k}
-            } 
-            {x} {
-                % Concealed tile
-                \if_bool:N \l_tile_sideways_bool
-                    \tl_put_left:Nn \l_output_tl {
-                        \includegraphics[angle=270, width=\l_mahjong_tile_height, origin=br]{tiles/Back.pdf}
-                    }
-                \else:
-                    \tl_put_left:Nn \l_output_tl {
-                        \includegraphics[angle=0, height=\l_mahjong_tile_height]{tiles/Back.pdf}
-                    }
-                \fi
-                \bool_set_false:N \l_tile_sideways_bool
-            }
-            {'} {
-                % Apostrophe means next tile is on its side
-                \bool_set_true:N \l_tile_sideways_bool
-                \bool_log:N \l_tile_sideways_bool
-            }
-        } {} {
-            % Insert tile
-            \make_tile:VV {\l_tmpa_tl} {\l_suit_tl}
         }
+    } {
+        \msg_error:nnx {mahjong} {unknown_tile} {#1}
     }
 }
 
-\cs_generate_variant:Nn \parse_group:nn { Vn, nV, VV }
+\cs_generate_variant:Nn \@@_make_tile:nn {VV, nn, xV}
 
 % Parses a full hand
-\cs_set:Npn \parse_hand:n #1 {
-    \tl_set:Nx \l_hand_tl {\text_lowercase:n {#1}} 
+\cs_set:Npn \@@_parse_hand:n #1 {
+    \tl_set:Nx \l_@@_hand_tl {\text_lowercase:n {#1}} 
     % MPSZ notation is easier to parse right-to-left, so reverse string
     % There is no string reversal function but we can reverse token lists
     % Token lists and strings are freely convertible between each other
-  %  \tl_new:N \l_reversed_tl
-    \tl_set:Nx \l_reversed_tl {\tl_reverse:V \l_hand_tl} 
-    %\tl_set:Nx \l_tmpa_tl {\tl_reverse:V \l_hand_str}
-    %\str_set:Nx \l_reversed_str {\tl_to_str:N \l_tmpa_tl}
-    \tl_map_variable:NNn \l_reversed_tl \l_current_char {
+    \tl_set:Nx \l_@@_reversed_tl {\tl_reverse:V \l_@@_hand_tl} 
+    \tl_map_variable:NNn \l_@@_reversed_tl \l_@@_current_char {
         % Check if we recognize the current token
-        \exp_args:NVV \tl_if_in:nnF \c_allowed_tokens_tl \l_current_char {
-            \msg_error:nnx {mahjong} {invalid_token} {\l_current_char}
+        \exp_args:NVV \tl_if_in:nnF \c_@@_allowed_tokens_tl \l_@@_current_char {
+            \msg_error:nnx {mahjong} {invalid_token} {\l_@@_current_char}
         }
-        \exp_args:NVV \tl_if_in:nnTF \c_suits_tl \l_current_char {
-            % If we've found a suit identifier, typeset the current group
-            \parse_group:VV \l_current_suit_tl \l_current_group_tl
-            % Start the next group
-            \tl_clear:N \l_current_group_tl
-            \tl_set:NV \l_current_suit_tl \l_current_char
+        \exp_args:NVV \tl_if_in:nnTF \c_@@_suits_tl \l_@@_current_char {
+            % If we've found a suit identifier, change the current suit
+            \tl_set:NV \l_@@_current_suit_tl \l_@@_current_char
         } {
-            % If the current symbol does not match a suit, assume it's part of the group
-            \tl_put_right:NV \l_current_group_tl \l_current_char
+            \str_case:VnF \l_@@_current_char {
+                {'} {
+                    \int_set:Nn \l_@@_tile_orientation_int {1}
+                }
+                {"} {
+                    \int_set:Nn \l_@@_tile_orientation_int {2}
+                }
+            } {
+                \prop_clear:N \l_tmpa_prop
+                \prop_put:NnV \l_tmpa_prop {suit} \l_@@_current_suit_tl
+                \prop_put:NnV \l_tmpa_prop {face} \l_@@_current_char
+                \prop_put:NnV \l_tmpa_prop {orientation} \l_@@_tile_orientation_int
+                \seq_put_left:NV \l_@@_tile_maps_seq \l_tmpa_prop
+                \int_set:Nn \l_@@_tile_orientation_int {0}
+            }
         }
     }
-    \parse_group:VV \l_current_suit_tl \l_current_group_tl
-    \tl_use:N \l_output_tl
-    \tl_clear:N \l_output_tl
+
+    \seq_map_variable:NNn \l_@@_tile_maps_seq \l_tmpa_prop {
+        \prop_get:NnN \l_tmpa_prop {face} \l_tmpa_tl
+        \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_str
+        \str_case:VnF \l_tmpa_tl {
+            {-} {
+                \includegraphics[height=\l_@@_mahjong_tile_height]{tiles/space.pdf}
+            } {X} {
+                \str_case:VnTF \l_tmpa_str {
+                    {0} {
+                        \int_set:Nn \l_tmpa_int {0}
+                    } {1} {
+                        \int_set:Nn \l_tmpa_int {90}
+                    }
+                } {
+                    \includegraphics[angle=\int_use:N \l_tmpa_int, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                } {
+                    %TODO: Actually stack tiles here
+                    \includegraphics[angle=180, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                }
+            } {?} {
+                \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_str
+            }
+        } {
+            \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_str
+        }
+    }
+    \seq_clear:N \l_@@_tile_maps_seq
 }
 
 % Have TeX automatically expand the argument for us
-\cs_generate_variant:Nn \parse_hand:n {x}
+\cs_generate_variant:Nn \@@_parse_hand:n {x}
 %    \end{macrocode}
 %
 % \begin{macro}{\mahjong}
@@ -230,11 +215,12 @@
 % It typesets a mahjong hand.
 %    \begin{macrocode}
 \NewDocumentCommand{\mahjong}{O{\baselineskip} m}{
-    \dim_set:Nn \l_mahjong_tile_height {#1}
-    \parse_hand:n {#2}
+    \dim_set:Nn \l_@@_mahjong_tile_height {#1}
+    \@@_parse_hand:n {#2}
 }
+%</pkg>
 %    \end{macrocode}
 % \end{macro}
 % 
-% \Finale
+% \end{implementation}
 \endinput
