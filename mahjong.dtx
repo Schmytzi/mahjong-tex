@@ -179,19 +179,19 @@
 
     \seq_map_variable:NNn \l_@@_tile_maps_seq \l_tmpa_prop {
         \prop_get:NnN \l_tmpa_prop {face} \l_tmpa_tl
-        \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_str
+        \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_int
         \str_case:VnF \l_tmpa_tl {
             {-} {
                 \includegraphics[height=\l_@@_mahjong_tile_height]{tiles/space.pdf}
-            } {X} {
-                \str_case:VnTF \l_tmpa_str {
+            } {x} {
+                \int_case:nnTF {\l_tmpa_int} {
                     {0} {
-                        \int_set:Nn \l_tmpa_int {0}
+                        \int_set:Nn \l_tmpb_int {0}
                     } {1} {
-                        \int_set:Nn \l_tmpa_int {90}
+                        \int_set:Nn \l_tmpb_int {90}
                     }
                 } {
-                    \includegraphics[angle=\int_use:N \l_tmpa_int, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                    \includegraphics[angle=\int_use:N \l_tmpb_int, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
                 } {
                     %TODO: Actually stack tiles here
                     \includegraphics[angle=180, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
@@ -200,7 +200,7 @@
                 \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_str
             }
         } {
-            \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_str
+            \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
         }
     }
     \seq_clear:N \l_@@_tile_maps_seq
