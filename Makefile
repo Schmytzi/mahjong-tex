@@ -25,13 +25,16 @@ clean:
 	rm -rf $(OUT)
 	rm -f mahjong.sty
 
+# Extract package from DTX source
 $(TEXBUILD)/mahjong.sty: mahjong.ins mahjong.dtx
 	$(dir_guard)
 	$(LATEX) $<
 
+# Compile documentation
 $(TEXBUILD)/%.pdf: %.tex $(TEXBUILD)/mahjong.sty
 	$(LATEXMK) $<
 
+# Move everything to TDS staging area where it belongs
 $(TDSDOC)/%.pdf: $(TEXBUILD)/%.pdf
 	$(dir_guard)
 	cp $< $@
@@ -59,6 +62,7 @@ $(TDSTEX)/%.sty: $(TEXBUILD)/%.sty
 $(TDSTEX)/tiles: tiles
 	cp -r $< $@
 
+# Create TDS zip and moved it to CTAN staging area
 $(CTAN)/mahjong.tds.zip: $(TDSDOC)/mahjong.pdf $(TDSDOC)/mahjong-code.pdf
 $(CTAN)/mahjong.tds.zip: $(TDSDOC)/mahjong.tex $(TDSDOC)/mahjong-code.tex $(TDSDOC)/README.md
 $(CTAN)/mahjong.tds.zip: $(TDSSRC)/mahjong.ins $(TDSSRC)/mahjong.dtx
@@ -67,6 +71,7 @@ $(CTAN)/mahjong.tds.zip: $(TDSTEX)/mahjong.sty $(TDSTEX)/tiles
 	cd $(TDS) && $(ZIP) $(@F) *
 	mv $(TDS)/$(@F) $@
 
+# Move everything to CTAN staging area
 $(CTAN)/%.pdf: $(TDSDOC)/%.pdf
 	$(dir_guard)
 	cp $< $@
@@ -79,6 +84,7 @@ $(CTAN)/%: %
 	$(dir_guard)
 	cp -r $< $@
 
+# Create final zip archive for upload to CTAN
 $(OUT)/mahjong-ctan.zip: $(CTAN)/mahjong.tex $(CTAN)/mahjong.pdf
 $(OUT)/mahjong-ctan.zip: $(CTAN)/mahjong-code.tex $(CTAN)/mahjong-code.pdf
 $(OUT)/mahjong-ctan.zip: $(CTAN)/README.md $(CTAN)/LICENSE
