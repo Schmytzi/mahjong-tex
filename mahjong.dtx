@@ -23,7 +23,7 @@
 
 %<*driver>
 \documentclass[full]{l3doc}
-\usepackage{mahjong}
+\usepackage[height=2\normalbaselineskip]{mahjong}
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
@@ -55,12 +55,13 @@
 % \DoNotIndex{\closeout,\day,\def,\edef,\else,\empty,\endgroup}
 
 % \title{The \textsf{mahjong} package\thanks{This document corresponds to \textsf{mahjong}~\fileversion, dated~\filedate}}
-%  \author{Daniel Schmitz \\ \texttt{schmytzi@gmail.com}}
+%  \author{Daniel Schmitz \\ \texttt{schmytzi@gmail.com}}
 %
 % \maketitle
+% \tableofcontents
 % \begin{documentation}
 % \section{Introduction}
-% I like mahjong!
+% I like mahjong! Here is a hand! \mahjong{123p}
 % \section{Typesetting Hands}
 % \DescribeMacro{mahjong}
 % Use |\mahjong| \oarg{height} \marg{hand}
@@ -73,7 +74,7 @@
 %<@@=mahjong>
 \NeedsTeXFormat{LaTeX2e}[2019/10/01]
 \RequirePackage{expl3}
-\ProvidesExplPackage{mahjong}{2021/04/04}{0.9}{Typeset Mahjong Hands}
+\ProvidesExplPackage{mahjong}{2021/04/11}{0.9}{Typeset Mahjong Hands}
 \RequirePackage{xparse}
 \RequirePackage{l3keys2e}
 \RequirePackage{graphicx}
