@@ -16,7 +16,7 @@ LATEXMK=latexmk -lualatex -outdir=$(TEXBUILD) -auxdir=$(TEXBUILD)
 ZIP=zip -r
 dir_guard=@mkdir -p $(@D)
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: $(OUT)/mahjong-ctan.zip
 
@@ -24,6 +24,10 @@ clean:
 	rm -rf $(BUILD)
 	rm -rf $(OUT)
 	rm -f mahjong.sty
+
+install: all
+	./install.sh
+
 
 # Extract package from DTX source
 $(TEXBUILD)/mahjong.sty: mahjong.ins mahjong.dtx
