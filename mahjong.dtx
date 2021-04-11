@@ -75,6 +75,7 @@
 \RequirePackage{expl3}
 \ProvidesExplPackage{mahjong}{2021/04/04}{0.5}{Typeset Mahjong Hands}
 \RequirePackage{xparse}
+\RequirePackage{l3keys2e}
 \RequirePackage{graphicx}
 \RequirePackage{stackengine}
 %    \end{macrocode}
@@ -86,7 +87,13 @@
 \msg_new:nnnn {mahjong} {unknown_tile}
 {I~don't~know~tile~#1.}
 {Please~check~the~documentation~for~recognized~tiles.}
+\msg_new:nnnn {mahjong} {unknown_orientation}
+{Orientation ~ #1 ~ is ~ unknown}
+{This ~ should ~ not ~ happen.~ Please ~ create ~ a ~ bug ~ report.}
 
+\keys_define:nn {mahjong} {
+    height .dim_gset:N = \g_@@_default_height
+}
 
 % Identifiers for all suits
 \cs_new:Npn \c_@@_suits_tl {mpsz}
@@ -102,52 +109,71 @@
 \tl_new:N \l_@@_current_group_tl
 \tl_new:N \l_@@_current_char
 
+
+\dim_set:Nn \g_@@_default_height {\baselineskip}
 \dim_new:N \l_@@_mahjong_tile_height
-\dim_set:Nn \l_@@_mahjong_tile_height {\baselineskip}
 
 \int_new:N \l_@@_tile_orientation_int
 \seq_new:N \l_@@_tile_maps_seq
 \str_new:N \l_@@_file_path_str
+
+
+\ProcessKeysPackageOptions{mahjong}
 %    \end{macrocode}
 
-% \begin{macro}[aux]{\@@_make_tile:nn, \@@_make_tile:VV, \@@_make_tile:xV}
+% \begin{macro}[aux]{\@@_make_tile:nn, \@@_make_tile:VV, \@@_make_tile:xV, \@@_make_tile:nV}
+% Inserts a mahjong tile into the input stream.
+% This functions only handles that use the front background and have a forground,
+% i.e. regular and blank tiles.
 %    \begin{macrocode}
 \cs_set:Npn \@@_make_tile:nn #1#2 {
     \file_if_exist:nTF {#1} {
-        \int_compare:nNnTF {#2} = 1 {
-            \stackinset{c}{0pt}{c}{0pt}{
-                \includegraphics[
-                    angle=90,
-                    width=.9\l_@@_mahjong_tile_height]
-                {#1}
-            }{
-                \includegraphics[
-                    angle=90,
-                    width=\l_@@_mahjong_tile_height]
-                {tiles/Front.pdf}
+        \int_case:nnF {#2} {
+            {0} {
+                \stackinset{c}{0pt}{c}{0pt}{
+                    \includegraphics[
+                        angle=0,
+                        height=.85\l_@@_mahjong_tile_height]
+                    {#1}
+                }{
+                    \includegraphics[
+                        angle=0,
+                        height=\l_@@_mahjong_tile_height]
+                    {tiles/Front.pdf}
+                }
+            } {1} {
+                \stackinset{c}{0pt}{c}{0pt}{
+                    \includegraphics[
+                        angle=90,
+                        width=.85\l_@@_mahjong_tile_height]
+                    {#1}
+                }{
+                    \includegraphics[
+                        angle=90,
+                        width=\l_@@_mahjong_tile_height]
+                    {tiles/Front.pdf}
+                }
+            } {2} {
+                % Stack 2 rotated tiles on top of each other.
+                \stackon [0pt] {
+                    \@@_make_tile:nn {#1} {1}
+                } {
+                    \@@_make_tile:nn {#1} {1}
+                }
             }
         } {
-            \stackinset{c}{0pt}{c}{0pt}{
-                \includegraphics[
-                    angle=0,
-                    height=.9\l_@@_mahjong_tile_height]
-                {#1}
-            }{
-                \includegraphics[
-                    angle=0,
-                    height=\l_@@_mahjong_tile_height]
-                {tiles/Front.pdf}
-            }
+            \msg_fatal:nnx {mahjong} {unknown_orientation} {#2}
         }
     } {
         \msg_error:nnx {mahjong} {unknown_tile} {#1}
     }
 }
 
-\cs_generate_variant:Nn \@@_make_tile:nn {VV, xV}
+\cs_generate_variant:Nn \@@_make_tile:nn {VV, xV, nV}
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\mahjong_typeset_hand:n, \mahjong_typeset_hand:x}
+% Parseses and typesets a mahjong hand in MPSZ notation.
 %    \begin{macrocode}
 % Parses a full hand
 \cs_set:Npn \mahjong_typeset_hand:n #1 {
@@ -167,51 +193,68 @@
         } {
             \str_case:VnF \l_@@_current_char {
                 {'} {
+                    % An apostrophe indicates that the next tile is rotated
                     \int_set:Nn \l_@@_tile_orientation_int {1}
                 }
                 {"} {
+                    % Quotes mean the next tile is actually 2 rotated tiles stacked on top of each other
                     \int_set:Nn \l_@@_tile_orientation_int {2}
                 }
             } {
+                % Default case: We've got a complete tile identifier
+                % Turn it into a property list
                 \prop_clear:N \l_tmpa_prop
                 \prop_put:NnV \l_tmpa_prop {suit} \l_@@_current_suit_tl
                 \prop_put:NnV \l_tmpa_prop {face} \l_@@_current_char
                 \prop_put:NnV \l_tmpa_prop {orientation} \l_@@_tile_orientation_int
+                % Add it to the beginning of the sequence (we are parsing in reverse)
                 \seq_put_left:NV \l_@@_tile_maps_seq \l_tmpa_prop
                 \int_set:Nn \l_@@_tile_orientation_int {0}
             }
         }
     }
-
+    % Typesetting begins here. Sequence is in correct order
     \seq_map_variable:NNn \l_@@_tile_maps_seq \l_tmpa_prop {
         \prop_get:NnN \l_tmpa_prop {face} \l_tmpa_tl
         \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_int
         \str_case:VnF \l_tmpa_tl {
             {-} {
+                % If the current face is a dash, insert a space
                 \includegraphics[height=\l_@@_mahjong_tile_height]{tiles/space.pdf}
             } {x} {
-                \int_case:nnTF {\l_tmpa_int} {
-                    {0} {
-                        \int_set:Nn \l_tmpb_int {0}
-                    } {1} {
-                        \int_set:Nn \l_tmpb_int {90}
-                    }
-                } {
-                    \includegraphics[
-                        angle=\int_use:N \l_tmpb_int,
+                % Insert a flipped tile
+                \int_case:nn {\l_tmpa_int} {
+                    {0} { % Upright
+                        \includegraphics[
+                        angle=0,
                         height=\l_@@_mahjong_tile_height]
                         {tiles/Back.pdf}
-                } {
-                    %TODO: Actually stack tiles here
-                    \includegraphics[angle=180,height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                    } {1} { % Rotated
+                        \includegraphics[
+                        angle=90,
+                        width=\l_@@_mahjong_tile_height]
+                        {tiles/Back.pdf}
+                    } {2} { % Rotated and stacked
+                        \stackon [0pt] {
+                            \includegraphics[
+                                angle=90,
+                                width=\l_@@_mahjong_tile_height]
+                                {tiles/Back.pdf}
+                        } {
+                            \includegraphics[angle=90,
+                            width=\l_@@_mahjong_tile_height]
+                            {tiles/Back.pdf}
+                        }
+                    }
                 }
-            } {?} {
+            } {?} { % Blank tile
                 \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_int
             }
-        } {
+        } { % Any other tile identified by a code.
             \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
         }
     }
+    % Clear the list for the next invocation
     \seq_clear:N \l_@@_tile_maps_seq
 }
 
@@ -221,10 +264,10 @@
 % \end{macro}
 % 
 % \begin{macro}{\mahjong}
-% This is the only \LaTeX{} 2$_\epsilon$ in this package.
+% This is the only \LaTeXe{} in this package.
 % It typesets a mahjong hand.
 %    \begin{macrocode}
-\NewDocumentCommand{\mahjong}{O{\baselineskip} m}{
+\NewDocumentCommand{\mahjong}{O{\g_@@_default_height} m}{
     \dim_set:Nn \l_@@_mahjong_tile_height {#1}
     \mahjong_typeset_hand:n {#2}
 }
