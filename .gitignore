@@ -279,3 +279,4 @@ TSWLatexianTemp*
 .DS_Store
 *.pdf
 *.code-workspace
+build/
