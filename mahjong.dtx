@@ -108,7 +108,10 @@
 \int_new:N \l_@@_tile_orientation_int
 \seq_new:N \l_@@_tile_maps_seq
 \str_new:N \l_@@_file_path_str
+%    \end{macrocode}
 
+% \begin{macro}[aux]{\@@_make_tile:nn, \@@_make_tile:VV, \@@_make_tile:xV}
+%    \begin{macrocode}
 \cs_set:Npn \@@_make_tile:nn #1#2 {
     \file_if_exist:nTF {#1} {
         \int_compare:nNnTF {#2} = 1 {
@@ -141,10 +144,13 @@
     }
 }
 
-\cs_generate_variant:Nn \@@_make_tile:nn {VV, nn, xV}
-
+\cs_generate_variant:Nn \@@_make_tile:nn {VV, xV}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\mahjong_typeset_hand:n, \mahjong_typeset_hand:x}
+%    \begin{macrocode}
 % Parses a full hand
-\cs_set:Npn \@@_parse_hand:n #1 {
+\cs_set:Npn \mahjong_typeset_hand:n #1 {
     \tl_set:Nx \l_@@_hand_tl {\text_lowercase:n {#1}} 
     % MPSZ notation is easier to parse right-to-left, so reverse string
     % There is no string reversal function but we can reverse token lists
@@ -191,13 +197,16 @@
                         \int_set:Nn \l_tmpb_int {90}
                     }
                 } {
-                    \includegraphics[angle=\int_use:N \l_tmpb_int, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                    \includegraphics[
+                        angle=\int_use:N \l_tmpb_int,
+                        height=\l_@@_mahjong_tile_height]
+                        {tiles/Back.pdf}
                 } {
                     %TODO: Actually stack tiles here
-                    \includegraphics[angle=180, height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
+                    \includegraphics[angle=180,height=\l_@@_mahjong_tile_height]{tiles/Back.pdf}
                 }
             } {?} {
-                \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_str
+                \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_int
             }
         } {
             \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
@@ -207,16 +216,17 @@
 }
 
 % Have TeX automatically expand the argument for us
-\cs_generate_variant:Nn \@@_parse_hand:n {x}
+\cs_generate_variant:Nn \@@_typeset_hand:n {x}
 %    \end{macrocode}
-%
+% \end{macro}
+% 
 % \begin{macro}{\mahjong}
 % This is the only \LaTeX{} 2$_\epsilon$ in this package.
 % It typesets a mahjong hand.
 %    \begin{macrocode}
 \NewDocumentCommand{\mahjong}{O{\baselineskip} m}{
     \dim_set:Nn \l_@@_mahjong_tile_height {#1}
-    \@@_parse_hand:n {#2}
+    \mahjong_typeset_hand:n {#2}
 }
 %</pkg>
 %    \end{macrocode}
