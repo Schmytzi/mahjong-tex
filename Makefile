@@ -3,6 +3,7 @@
 BUILD=build
 TEXBUILD=$(BUILD)/tex
 OUT=out
+TEXMF_HOME:= $(shell kpsewhich -var-value TEXMFHOME)
 # TDS directories
 TDS=$(BUILD)/tds
 TDSDOC=$(TDS)/doc/latex/mahjong
@@ -26,7 +27,7 @@ clean:
 	rm -f mahjong.sty
 
 install: all
-	./install.sh
+	unzip $(CTAN)/mahjong.tds.zip -d $(TEXMF_HOME)
 
 
 # Extract package from DTX source
