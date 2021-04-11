@@ -9,6 +9,7 @@ However, flower tiles are currently missing.
 
 ## Usage
 ```
+\usepackage{mahjong}
 \mahjong{<tiles>}
 ```
 Insert mahjong tiles as specified by `<tiles>`. For instance,
