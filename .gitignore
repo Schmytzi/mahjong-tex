@@ -280,3 +280,4 @@ TSWLatexianTemp*
 *.pdf
 *.code-workspace
 build/
+out/
