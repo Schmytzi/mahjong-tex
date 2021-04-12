@@ -14,7 +14,7 @@ However, flower tiles are currently missing.
 ```
 Insert mahjong tiles as specified by `<tiles>`. For instance,
 ```
-\mahjong{119p19s19m1234567z}
+\mahjong{119p 19s 19m 1234567z}
 ```
 produces an image of the "Thirteen Orphans" hand with a pair of 1 dots.
 
