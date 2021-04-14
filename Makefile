@@ -13,7 +13,7 @@ TDSTEX=$(TDS)/tex/latex/mahjong
 CTAN=$(BUILD)/ctan
 # Compilers
 LATEX=latex -output-directory $(TEXBUILD)
-LATEXMK=latexmk -lualatex -outdir=$(TEXBUILD) -auxdir=$(TEXBUILD)
+LATEXMK=latexmk -lualatex -outdir=$(TEXBUILD) -auxdir=$(TEXBUILD) -interaction=nonstopmode
 ZIP=zip -r
 dir_guard=@mkdir -p $(@D)
 
@@ -36,7 +36,7 @@ $(TEXBUILD)/mahjong.sty: mahjong.ins mahjong.dtx
 	$(LATEX) $<
 
 # Compile documentation
-$(TEXBUILD)/%.pdf: %.tex $(TEXBUILD)/mahjong.sty
+$(TEXBUILD)/%.pdf: %.tex $(TEXBUILD)/mahjong.sty tiles
 	$(LATEXMK) $<
 
 # Move everything to TDS staging area where it belongs
