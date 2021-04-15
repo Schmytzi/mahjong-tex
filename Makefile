@@ -11,6 +11,7 @@ TDSSRC=$(TDS)/source/latex/mahjong
 TDSTEX=$(TDS)/tex/latex/mahjong
 # CTAN directories
 CTAN=$(BUILD)/ctan
+CTAN_MAHJONG=$(CTAN)/mahjong
 # Compilers
 LATEX=latex -output-directory $(TEXBUILD)
 LATEXMK=latexmk -lualatex -outdir=$(TEXBUILD) -auxdir=$(TEXBUILD) -interaction=nonstopmode
@@ -52,11 +53,19 @@ $(TDSDOC)/README.md: README.md
 	$(dir_guard)
 	cp $< $@
 
+$(TDSDOC)/LICENSE: LICENSE
+	$(dir_guard)
+	cp $< $@
+
 $(TDSSRC)/mahjong.dtx: mahjong.dtx
 	$(dir_guard)
 	cp $< $@
 
 $(TDSSRC)/mahjong.ins: mahjong.ins
+	$(dir_guard)
+	cp $< $@
+
+$(TDSSRC)/Makefile: Makefile
 	$(dir_guard)
 	cp $< $@
 
@@ -69,32 +78,34 @@ $(TDSTEX)/tiles: tiles
 
 # Create TDS zip and moved it to CTAN staging area
 $(CTAN)/mahjong.tds.zip: $(TDSDOC)/mahjong.pdf $(TDSDOC)/mahjong-code.pdf
-$(CTAN)/mahjong.tds.zip: $(TDSDOC)/mahjong.tex $(TDSDOC)/mahjong-code.tex $(TDSDOC)/README.md
-$(CTAN)/mahjong.tds.zip: $(TDSSRC)/mahjong.ins $(TDSSRC)/mahjong.dtx
+$(CTAN)/mahjong.tds.zip: $(TDSDOC)/mahjong.tex $(TDSDOC)/mahjong-code.tex
+$(CTAN)/mahjong.tds.zip: $(TDSDOC)/README.md $(TDSDOC)/LICENSE
+$(CTAN)/mahjong.tds.zip: $(TDSSRC)/mahjong.ins $(TDSSRC)/mahjong.dtx $(TDSSRC)/Makefile
 $(CTAN)/mahjong.tds.zip: $(TDSTEX)/mahjong.sty $(TDSTEX)/tiles
 	$(dir_guard)
 	cd $(TDS) && $(ZIP) $(@F) *
 	mv $(TDS)/$(@F) $@
 
 # Move everything to CTAN staging area
-$(CTAN)/%.pdf: $(TDSDOC)/%.pdf
+$(CTAN_MAHJONG)/%.pdf: $(TDSDOC)/%.pdf
 	$(dir_guard)
 	cp $< $@
 
-$(CTAN)/%.tex: $(TDSDOC)/%.tex
+$(CTAN_MAHJONG)/%.tex: $(TDSDOC)/%.tex
 	$(dir_guard)
 	cp $< $@
 
-$(CTAN)/%: %
+$(CTAN_MAHJONG)/%: %
 	$(dir_guard)
 	cp -r $< $@
 
 # Create final zip archive for upload to CTAN
-$(OUT)/mahjong-ctan.zip: $(CTAN)/mahjong.tex $(CTAN)/mahjong.pdf
-$(OUT)/mahjong-ctan.zip: $(CTAN)/mahjong-code.tex $(CTAN)/mahjong-code.pdf
-$(OUT)/mahjong-ctan.zip: $(CTAN)/README.md $(CTAN)/LICENSE
-$(OUT)/mahjong-ctan.zip: $(CTAN)/mahjong.dtx $(CTAN)/mahjong.ins
-$(OUT)/mahjong-ctan.zip: $(CTAN)/tiles $(CTAN)/mahjong.tds.zip
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/mahjong.tex $(CTAN_MAHJONG)/mahjong.pdf
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/mahjong-code.tex $(CTAN_MAHJONG)/mahjong-code.pdf
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/README.md $(CTAN_MAHJONG)/LICENSE
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/mahjong.dtx $(CTAN_MAHJONG)/mahjong.ins
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/Makefile
+$(OUT)/mahjong-ctan.zip: $(CTAN_MAHJONG)/tiles $(CTAN)/mahjong.tds.zip
 	$(dir_guard)
 	cd $(CTAN) && $(ZIP) $(@F) ./*
 	mv $(CTAN)/$(@F) $@
