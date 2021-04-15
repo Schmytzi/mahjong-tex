@@ -1,4 +1,7 @@
 # mahjong-tex
+
+[![CTAN](https://img.shields.io/ctan/v/mahjong)](https://ctan.org/pkg/mahjong)
+
 A LaTeX 3 package for typesetting mahjong hands using MPSZ algebraic notation.
 This package provides an interface for LaTeX 2e, so you can use it without any experience in LaTeX 3.
 
