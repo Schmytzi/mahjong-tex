@@ -261,7 +261,7 @@
                     \includegraphics[
                         angle=0, 
                         height=\l_mahjong_tile_height]
-                    {tiles/Front.pdf}
+                    {tiles/mahjong-Front.pdf}
                 }
             } {1} {
                 \stackinset{c}{0pt}{c}{0pt}{
@@ -273,7 +273,7 @@
                     \includegraphics[
                         angle=90,
                         width=\l_mahjong_tile_height]
-                    {tiles/Front.pdf}
+                    {tiles/mahjong-Front.pdf}
                 }
             } {2} {
                 % Stack 2 rotated tiles on top of each other.
@@ -343,7 +343,7 @@
         \str_case:VnF \l_tmpa_tl {
             {-} {
                 % If the current face is a dash, insert a space
-                \includegraphics[height=\l_mahjong_tile_height]{tiles/space.pdf}
+                \includegraphics[height=\l_mahjong_tile_height]{tiles/mahjong-Space.pdf}
             } {x} {
                 % Insert a flipped tile
                 \int_case:nn {\l_tmpa_int} {
@@ -351,30 +351,30 @@
                         \includegraphics[
                         angle=0,
                         height=\l_mahjong_tile_height]
-                        {tiles/Back.pdf}
+                        {tiles/mahjong-Back.pdf}
                     } {1} { % Rotated
                         \includegraphics[
                         angle=90,
                         width=\l_mahjong_tile_height]
-                        {tiles/Back.pdf}
+                        {tiles/mahjong-Back.pdf}
                     } {2} { % Rotated and stacked
                         \stackon [0pt] {
                             \includegraphics[
                                 angle=90,
                                 width=\l_mahjong_tile_height]
-                                {tiles/Back.pdf}
+                                {tiles/mahjong-Back.pdf}
                         } {
                             \includegraphics[angle=90,
                             width=\l_mahjong_tile_height]
-                            {tiles/Back.pdf}
+                            {tiles/mahjong-Back.pdf}
                         }
                     }
                 }
             } {?} { % Blank tile
-                \@@_make_tile:nV {tiles/Blank.pdf} \l_tmpa_int
+                \@@_make_tile:nV {tiles/mahjong-Blank.pdf} \l_tmpa_int
             }
         } { % Any other tile identified by a code.
-            \@@_make_tile:xV {tiles/\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
+            \@@_make_tile:xV {tiles/mahjong-\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
         }
     }
     % Clear the list for the next invocation
