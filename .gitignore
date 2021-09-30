@@ -278,6 +278,7 @@ TSWLatexianTemp*
 # Project specific
 .DS_Store
 *.pdf
+!tiles/*.pdf
 *.code-workspace
 build/
 out/
