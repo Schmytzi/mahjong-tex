@@ -61,6 +61,7 @@
 % \changes{v0.9}{2021/04/11}{Fully functional}
 % \changes{v1.0}{2021/04/14}{First complete release}
 % \changes{v1.0.1}{2021/04/16}{Added package prefix to filenames}
+% \changes{v1.1}{2025/01/06}{Added feature to control size of symbols. Adjusted vertical alignment.}
 % 
 % \GetFileInfo{mahjong.sty}
 % \DoNotIndex{\#,\$,\%,\&,\@,\\,\{,\},\^,\_,\~,\ }
@@ -68,16 +69,15 @@
 % \DoNotIndex{\closeout,\day,\def,\edef,\else,\empty,\endgroup}
 
 % \title{The \textsf{mahjong} package\thanks{This document corresponds to \textsf{mahjong}~\fileversion, dated~\filedate}}
-%  \author{Daniel Schmitz \\ \texttt{schmytzi@gmail.com}}
+%  \author{Daniel Schmitz \\ \texttt{me@schmytzi.com}}
 %
 % \maketitle
 % \tableofcontents
 % \begin{abstract}
 % The \textsf{mahjong} package provides a \LaTeXe{} and \LaTeX~3 interface for typesetting mahjong tiles using an extended version of MPSZ algebraic notation.
 % Features include spaces, rotated, blank, and concealed tiles, as well as red fives.
-% The size of the mahjong tiles can be controlled using a package option and an optional argument of |\mahjong|.
-% It is primarily aimed at Riichi (aka. Japanese) Mahjong but can be used to typeset any style of mahjong.
-% However, flower tiles and jokers are currently missing.
+% The size of the mahjong tiles and their symbols can be controlled using package options and optional arguments.
+% It is primarily aimed at Riichi (aka. Japanese) Mahjong but can be used to typeset any style of mahjong, save for flower tiles.
 % \end{abstract}
 %
 % \begin{documentation}
@@ -87,7 +87,7 @@
 % This documentation assumes familiarity with the game in general but none of its many styles.
 % Nonetheless, some basic terms will be defined because of differing vocabulary among players.
 % 
-% \newcommand{\rmahjong}[1]{\raisebox{-.4\height}{\mahjong{#1}}}
+% \newcommand{\rmahjong}[1]{\raisebox{-.15\height}{\mahjong{#1}}}
 % \section{Mahjong Tiles}
 % \subsection{Suited Tiles}
 % The suited tiles are referred to as follows:
@@ -172,18 +172,28 @@
 %
 % \section{Typesetting Mahjong Tiles in Your Document}
 % \DescribeMacro{\mahjong}
-% The main interface is |\mahjong| \oarg{height} \marg{hand}.
-% \meta{hand} refers to a tile sequence in MPSZ notation as discussed above and \meta{height} specifies the height of the rendered mahjong tiles.
-% If \meta{height} is not specified, the default height is used.
+% The main interface is |\mahjong| \oarg{height} \oarg{scale} \marg{hand}.
+% \meta{hand} refers to a tile sequence in MPSZ notation as discussed above.
+% \meta{height} specifies the height of the rendered mahjong tiles.
+% \meta{scale} specifies the fraction of vertical space that the tiles' symbols should occupy.
+% The value should be between 0 and 1.
+% If an optional argument is not given, the default (which can be set through a package argument) will be used.
 %
 % \DescribeMacro{\mahjong_typeset_hand:n} \DescribeMacro{\mahjong_typeset_hand:x}
 % The \LaTeX~3 interface for rendering mahjong tiles are |\mahjong_typeset_hand:n| and its variants.
 % This macro accepts the hand to be rendered in MPSZ notation.
 % The height can be specified by setting |\l_mahjong_tile_height| \DescribeMacro{\l_mahjong_tile_height} and the default height is saved in |\g_mahjong_default_height|. \DescribeMacro{\g_mahjong_default_height}
+% The scale of the tiles' symbols can be changed by setting |\l_mahjong_tile_scale| \DescribeMacro{\l_mahjong_tile_scale} and the default scale is saved in |\g_mahjong_default_scale|.\DescribeMacro{\g_mahjong_default_scale}
 % 
-% The default height can be set using the package's |height| parameter.
-% For instance, |\usepackage[height=2\baselineskip]{mahjong}| sets the default size of mahjong tiles to double the value of |\baselineskip| in the context they are rendered in.
-% The parameter defaults to |\baselineskip|.
+% \subsection{Package Options}
+% \begin{description}
+%   \item[height]
+%     The default height can be set using the package's |height| parameter.
+%     For instance, |\usepackage[height=2\baselineskip]{mahjong}| sets the default size of mahjong tiles to double the value of |\baselineskip| in the context they are rendered in.
+%   \item[scale] The default scale can be set using the package's |scale| parameter.
+%      It should ideally be set to a constant to ensure consistent typesetting.
+%      The default is 0.75, i.e. the symbols take up 85\% of the tiles' vertical space.
+% \end{description}
 %
 % \section{Acknowledgments}
 % The mahjong tiles used in this package were created by GitHub user \href{https://github.com/FluffyStuff}{FluffyStuff}.
@@ -196,7 +206,7 @@
 %<@@=mahjong>
 \NeedsTeXFormat{LaTeX2e}[2019/10/01]
 \RequirePackage{expl3}
-\ProvidesExplPackage{mahjong}{2021/04/16}{1.0.1}{Typeset Mahjong Hands}
+\ProvidesExplPackage{mahjong}{2025/01/06}{1.1}{Typeset Mahjong Hands}
 \RequirePackage{xparse}
 \RequirePackage{l3keys2e}
 \RequirePackage{graphicx}
@@ -215,7 +225,8 @@
 {This ~ should ~ not ~ happen.~ Please ~ create ~ a ~ bug ~ report.}
 
 \keys_define:nn {mahjong} {
-    height .dim_gset:N = \g_mahjong_default_height
+    height .dim_gset:N = \g_mahjong_default_height,
+    scale .int_gset:N = \g_mahjong_default_scale
 }
 
 % Identifiers for all suits
@@ -236,6 +247,12 @@
 \dim_set:Nn \g_mahjong_default_height {\baselineskip}
 \dim_new:N \l_mahjong_tile_height
 
+\fp_set:Nn \g_mahjong_default_scale {0.75}
+\fp_new:N \l_mahjong_tile_scale
+
+\dim_new:N \l_@@_symbol_height
+\dim_new:N \l_@@_baseline_offset
+
 \int_new:N \l_@@_tile_orientation_int
 \seq_new:N \l_@@_tile_maps_seq
 \str_new:N \l_@@_file_path_str
@@ -246,7 +263,7 @@
 
 % \begin{macro}[aux]{\@@_make_tile:nn, \@@_make_tile:VV, \@@_make_tile:xV, \@@_make_tile:nV}
 % Inserts a mahjong tile into the input stream.
-% This functions only handles that use the front background and have a forground,
+% This functions only handles tiles that use the front background and have a forground,
 % i.e. regular and blank tiles.
 %    \begin{macrocode}
 \cs_set:Npn \@@_make_tile:nn #1#2 {
@@ -256,7 +273,7 @@
                 \stackinset{c}{0pt}{c}{0pt}{
                     \includegraphics[
                         angle=0,
-                        height=.85\l_mahjong_tile_height]
+                        height=\l_@@_symbol_height]
                     {#1}
                 }{
                     \includegraphics[
@@ -268,7 +285,7 @@
                 \stackinset{c}{0pt}{c}{0pt}{
                     \includegraphics[
                         angle=90,
-                        width=.85\l_mahjong_tile_height]
+                        width=\l_@@_symbol_height]
                     {#1}
                 }{
                     \includegraphics[
@@ -296,11 +313,15 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\mahjong_typeset_hand:n, \mahjong_typeset_hand:x}
-% Parseses and typesets a mahjong hand in MPSZ notation.
-% Set |\l_mahjong_tile_height| to control the tiles' size.
+% Parses and typesets a mahjong hand in MPSZ notation.
+% Set |\l_mahjong_tile_height| to control the tiles' size and |\l_mahjong_tile_scale| to control the size of the symbol relative to the tile.
 %    \begin{macrocode}
 % Parses a full hand
 \cs_set:Npn \mahjong_typeset_hand:n #1 {
+    % Set computed dimensions for symbol height and baseline offset
+    \dim_set:Nn \l_@@_symbol_height {\fp_to_decimal:n {\l_mahjong_tile_scale}\l_mahjong_tile_height}
+    \dim_set:Nn \l_@@_baseline_offset {(\l_mahjong_tile_height - \l_@@_symbol_height) / 2}
+    % Start sequence processing
     \tl_set:Nx \l_@@_hand_tl {\text_lowercase:n {#1}} 
     % MPSZ notation is easier to parse right-to-left, so reverse string
     % There is no string reversal function but we can reverse token lists
@@ -338,44 +359,46 @@
         }
     }
     % Typesetting begins here. Sequence is in correct order
-    \seq_map_variable:NNn \l_@@_tile_maps_seq \l_tmpa_prop {
-        \prop_get:NnN \l_tmpa_prop {face} \l_tmpa_tl
-        \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_int
-        \str_case:VnF \l_tmpa_tl {
-            {-} {
-                % If the current face is a dash, insert a space
-                \includegraphics[height=\l_mahjong_tile_height]{tiles/mahjong-Space.pdf}
-            } {x} {
-                % Insert a flipped tile
-                \int_case:nn {\l_tmpa_int} {
-                    {0} { % Upright
-                        \includegraphics[
-                        angle=0,
-                        height=\l_mahjong_tile_height]
-                        {tiles/mahjong-Back.pdf}
-                    } {1} { % Rotated
-                        \includegraphics[
-                        angle=90,
-                        width=\l_mahjong_tile_height]
-                        {tiles/mahjong-Back.pdf}
-                    } {2} { % Rotated and stacked
-                        \stackon [0pt] {
+    \raisebox{-\l_@@_baseline_offset}{
+        \seq_map_variable:NNn \l_@@_tile_maps_seq \l_tmpa_prop {
+            \prop_get:NnN \l_tmpa_prop {face} \l_tmpa_tl
+            \prop_get:NnN \l_tmpa_prop {orientation} \l_tmpa_int
+            \str_case:VnF \l_tmpa_tl {
+                {-} {
+                    % If the current face is a dash, insert a space
+                    \includegraphics[height=\l_mahjong_tile_height]{tiles/mahjong-Space.pdf}
+                } {x} {
+                    % Insert a flipped tile
+                    \int_case:nn {\l_tmpa_int} {
+                        {0} { % Upright
                             \includegraphics[
-                                angle=90,
-                                width=\l_mahjong_tile_height]
-                                {tiles/mahjong-Back.pdf}
-                        } {
-                            \includegraphics[angle=90,
+                            angle=0,
+                            height=\l_mahjong_tile_height]
+                            {tiles/mahjong-Back.pdf}
+                        } {1} { % Rotated
+                            \includegraphics[
+                            angle=90,
                             width=\l_mahjong_tile_height]
                             {tiles/mahjong-Back.pdf}
+                        } {2} { % Rotated and stacked
+                            \stackon [0pt] {
+                                \includegraphics[
+                                    angle=90,
+                                    width=\l_mahjong_tile_height]
+                                    {tiles/mahjong-Back.pdf}
+                            } {
+                                \includegraphics[angle=90,
+                                width=\l_mahjong_tile_height]
+                                {tiles/mahjong-Back.pdf}
+                            }
                         }
                     }
+                } {?} { % Blank tile
+                    \@@_make_tile:nV {tiles/mahjong-Blank.pdf} \l_tmpa_int
                 }
-            } {?} { % Blank tile
-                \@@_make_tile:nV {tiles/mahjong-Blank.pdf} \l_tmpa_int
+            } { % Any other tile identified by a code.
+                \@@_make_tile:xV {tiles/mahjong-\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
             }
-        } { % Any other tile identified by a code.
-            \@@_make_tile:xV {tiles/mahjong-\l_tmpa_tl\prop_item:Nn \l_tmpa_prop {suit}.pdf} \l_tmpa_int
         }
     }
     % Clear the list for the next invocation
@@ -391,9 +414,10 @@
 % This is the only \LaTeXe{} macro in this package.
 % It typesets a mahjong hand.
 %    \begin{macrocode}
-\NewDocumentCommand{\mahjong}{O{\g_mahjong_default_height} m}{
+\NewDocumentCommand{\mahjong}{O{\g_mahjong_default_height} O{\g_mahjong_default_scale} m}{
     \dim_set:Nn \l_mahjong_tile_height {#1}
-    \mahjong_typeset_hand:n {#2}
+    \fp_set:Nn \l_mahjong_tile_scale {#2}
+    \mahjong_typeset_hand:n {#3}
 }
 %</pkg>
 %    \end{macrocode}
